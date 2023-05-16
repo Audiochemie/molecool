@@ -1,5 +1,8 @@
+use crate::pse_data::PSE_MASSES;
 use nalgebra::Point3;
 use qc_file_parsers::{xyzline::symbol::PSE_SYMBOLS, XyzLine};
+
+pub mod pse_data;
 
 /// Collects different coordinate types commonly used in quantum chemistry.
 #[derive(Debug, PartialEq)]
@@ -35,13 +38,16 @@ impl From<XyzLine> for Atom {
             XyzLine::Numeric(n) => Self {
                 coordinates: Coordinates::Cartesian(n.xyz),
                 z_value: n.z_value,
-                atomic_mass: 0.0_f32,
+                atomic_mass: PSE_MASSES[n.z_value],
             },
-            XyzLine::Symbolic(s) => Self {
-                coordinates: Coordinates::Cartesian(s.xyz),
-                z_value: PSE_SYMBOLS.iter().position(|&sym| sym == s.symbol).unwrap(),
-                atomic_mass: 0.0_f32,
-            },
+            XyzLine::Symbolic(s) => {
+                let z_value = PSE_SYMBOLS.iter().position(|&sym| sym == s.symbol).unwrap();
+                Self {
+                    coordinates: Coordinates::Cartesian(s.xyz),
+                    z_value,
+                    atomic_mass: PSE_MASSES[z_value],
+                }
+            }
         }
     }
 }

@@ -3,6 +3,7 @@ mod file_setup;
 mod tests {
     use crate::file_setup;
     use molecool::{Atom, Coordinates};
+    use molecool::pse_data::PSE_MASSES;
     use nalgebra::Point3;
     use qc_file_parsers::Xyz;
     #[test]
@@ -14,6 +15,8 @@ mod tests {
         assert_eq!(
             test_atom.coordinates,
             Coordinates::Cartesian(Point3::new(0.0_f32, 0.0_f32, 1.889_726_f32))
-        )
+        );
+        assert_eq!(test_atom.atomic_mass, PSE_MASSES[6]);
+
     }
 }
