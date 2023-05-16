@@ -1,6 +1,6 @@
 use crate::pse_data::PSE_MASSES;
 use nalgebra::Point3;
-use qc_file_parsers::{xyzline::symbol::PSE_SYMBOLS, XyzLine};
+use qc_file_parsers::{xyzline::symbol::PSE_SYMBOLS, XyzLine, Xyz};
 
 pub mod pse_data;
 
@@ -29,6 +29,15 @@ pub struct Molecule {
     pub molar_mass: f32,
     /// Molecules are commonly interpreted as a collection of building atoms.
     pub building_atoms: Vec<Atom>,
+}
+
+impl From<Xyz> for Molecule {
+    fn from(value: Xyz) -> Self {
+        let mut atoms = Vec::with_capacity(value.number_of_atoms);
+        value.lines.iter().for_each(|xyz_line| atoms.push(Atom::from(xyz_line.clone())));
+        let molar_mass = atoms.iter().fold(0.0_f32, |at, at2| at + at2.atomic_mass);
+        Self { molar_mass, building_atoms: atoms }
+    }
 }
 
 impl From<XyzLine> for Atom {
