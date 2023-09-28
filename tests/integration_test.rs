@@ -1,12 +1,13 @@
 mod file_setup;
 #[cfg(test)]
 mod tests {
+    use coordinate_systems::Coordinates;
     use crate::file_setup;
     use approx::assert_relative_eq;
-    use molecool::{Atom, Coordinates, Molecule};
+    use molecool::{atom::Atom, molekel::Molecule};
     use molecool::pse_data::PSE_MASSES;
     use nalgebra::Point3;
-    use qc_file_parsers::Xyz;
+    use qc_file_parsers::xyz::Xyz;
     #[test]
     fn test_atom_from_symbolic() {
         let mut test_file = file_setup::setup_allene_symbolic().unwrap();
