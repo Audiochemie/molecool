@@ -61,7 +61,7 @@ mod tests {
         let iter_space = (natms * natms - natms) / 2;
         assert_eq!(iter_space, expected.len());
         for i in 0..iter_space {
-            assert_relative_eq!(distance_vec[i], expected[i], epsilon=1.0);
+            assert_relative_eq!(distance_vec[i].norm(), expected[i], epsilon=0.00001);
         }
     }
 }

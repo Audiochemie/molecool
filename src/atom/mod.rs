@@ -1,6 +1,7 @@
 use super::pse_data::PSE_MASSES;
 use coordinate_systems::cartesian::Cartesian;
 use qc_file_parsers::xyz::{xyzline::symbol::PSE_SYMBOLS, XyzLine};
+
 /// Represents an Atom as found in the periodic system
 pub struct Atom {
     /// The core charge
