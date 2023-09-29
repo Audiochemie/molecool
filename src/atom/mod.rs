@@ -1,5 +1,5 @@
 use super::pse_data::PSE_MASSES;
-use coordinate_systems::Coordinates;
+use coordinate_systems::cartesian::Cartesian;
 use qc_file_parsers::xyz::{xyzline::symbol::PSE_SYMBOLS, XyzLine};
 /// Represents an Atom as found in the periodic system
 pub struct Atom {
@@ -8,7 +8,7 @@ pub struct Atom {
     /// The atomic mass.
     pub atomic_mass: f32,
     /// The coordinates in space.
-    pub coordinates: Coordinates,
+    pub coordinates: Cartesian,
 }
 
 impl From<XyzLine> for Atom {
@@ -16,14 +16,14 @@ impl From<XyzLine> for Atom {
     fn from(value: XyzLine) -> Self {
         match value {
             XyzLine::Numeric(n) => Self {
-                coordinates: Coordinates::Cartesian(n.xyz),
+                coordinates: Cartesian(n.xyz),
                 z_value: n.z_value,
                 atomic_mass: PSE_MASSES[n.z_value],
             },
             XyzLine::Symbolic(s) => {
                 let z_value = PSE_SYMBOLS.iter().position(|&sym| sym == s.symbol).unwrap();
                 Self {
-                    coordinates: Coordinates::Cartesian(s.xyz),
+                    coordinates: Cartesian(s.xyz),
                     z_value,
                     atomic_mass: PSE_MASSES[z_value],
                 }
