@@ -1,11 +1,17 @@
 mod file_setup;
 #[cfg(test)]
 mod tests {
+    use std::f32::consts::FRAC_1_PI;
+    use std::iter::zip;
+
     use crate::file_setup;
-    use approx::{assert_ulps_eq, assert_relative_eq};
+    use approx::assert_relative_eq;
     use coordinate_systems::cartesian::Cartesian;
     use molecool::pse_data::PSE_MASSES;
-    use molecool::{atom::Atom, molekel::{Molecule, get_distances}};
+    use molecool::{
+        atom::Atom,
+        molekel::{get_distances, get_oop, Molecule},
+    };
     use nalgebra::Point3;
     use qc_file_parsers::xyz::Xyz;
     #[test]
@@ -61,7 +67,27 @@ mod tests {
         let iter_space = (natms * natms - natms) / 2;
         assert_eq!(iter_space, expected.len());
         for i in 0..iter_space {
-            assert_relative_eq!(distance_vec[i].norm(), expected[i], epsilon=0.00001);
+            assert_relative_eq!(distance_vec[i].norm(), expected[i], epsilon = 0.00001);
+        }
+    }
+    #[test]
+    fn test_get_oop() {
+        let mut test_file = file_setup::setup_acetaldehyde_numeric().unwrap();
+        let test_parsed = Xyz::new(&mut test_file, "Ang").unwrap();
+        let mol = Molecule::from(test_parsed);
+        let quadruples: [(usize, usize, usize, usize); 4] =
+            [(0, 5, 4, 6), (0, 4, 5, 6), (6, 0, 5, 4), (4, 1, 0, 5)];
+        let expected: [f32; 4] = [19.939_726_f32, -19.850_523_f32, -31.064_344_f32, -53.651_534_f32];
+        for (angle, quadruple) in zip(expected, quadruples) {
+            let h = &mol.building_atoms[quadruple.0];
+            let l = &mol.building_atoms[quadruple.1];
+            let c = &mol.building_atoms[quadruple.2];
+            let r = &mol.building_atoms[quadruple.3];
+            assert_relative_eq!(
+                angle,
+                get_oop(l, c, r, h) * 180.0_f32 * FRAC_1_PI,
+                epsilon = 0.00001
+            );
         }
     }
 }
