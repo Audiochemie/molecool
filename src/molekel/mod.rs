@@ -32,7 +32,6 @@ impl From<Xyz> for Molecule {
 ///
 /// * `a` - First atom
 /// * `b` - Second atom
-
 pub fn get_distance_vec_between(a: &Atom, b: &Atom) -> Vector3<f32> {
     a.coordinates.distance_to(&b.coordinates)
 }
@@ -73,6 +72,26 @@ pub fn get_oop(l: &Atom, c: &Atom, r: &Atom, h: &Atom) -> f32 {
     (n_vec_lcr * 1.0_f32 / denom).dot(&e_hc).asin()
 }
 
+/// Function to retrive torsional angle between four building atoms.
+///
+/// # Arguments
+///
+/// * `c1` - atom connected to b1
+/// * `b1` - bonding atom1
+/// * `b2` - bonding atom2
+/// * `c2` - atom connected to b2
+///
+pub fn get_tors(c1: &Atom, b1: &Atom, b2: &Atom, c2: &Atom) -> f32 {
+    let u1 = get_distance_vec_between(c1, b1);
+    let u2 = get_distance_vec_between(b1, b2);
+    let u3 = get_distance_vec_between(b2, c2);
+    let cross_1 = u1.cross(&u2);
+    let cross_2 = u2.cross(&u3);
+    let denom = 1.0_f32 / (cross_1.norm() * cross_2.norm());
+    let dot_denom = (cross_1).dot(&cross_2) * denom;
+    dot_denom.acos()
+}
+
 /// Function to retrive all distance vectors for all atom pairs in the molecule.
 ///
 /// # Arguments
@@ -97,7 +116,7 @@ mod unit_tests {
     use std::f32::consts::FRAC_1_PI;
 
     use super::{get_angle_between, get_distance_vec_between, get_oop};
-    use crate::atom::Atom;
+    use crate::{atom::Atom, molekel::get_tors};
     use approx::assert_relative_eq;
     use nalgebra::Point3;
 
@@ -157,11 +176,7 @@ mod unit_tests {
         assert_relative_eq!(d12, 2.845_112_f32, epsilon = 0.00001);
         assert_relative_eq!(e12.norm(), 1.0_f32, epsilon = 0.00001);
         let a = get_angle_between(&l, &c, &r);
-        assert_relative_eq!(
-            a * 180.0_f32 * FRAC_1_PI,
-            124.268_31_f32,
-            epsilon = 0.000001
-        )
+        assert_relative_eq!(a.to_degrees(), 124.268_31_f32, epsilon = 0.000001)
     }
 
     #[test]
@@ -201,5 +216,44 @@ mod unit_tests {
             )),
         };
         assert_relative_eq!(0.0_f32, get_oop(&l, &c, &r, &h))
+    }
+    #[test]
+    fn test_torsional_angle() {
+        let c2 = Atom {
+            z_value: 6,
+            atomic_mass: 12.0,
+            coordinates: coordinate_systems::cartesian::Cartesian(Point3::new(
+                0.0_f32, 0.0_f32, 0.0_f32,
+            )),
+        };
+        let b2 = Atom {
+            z_value: 6,
+            atomic_mass: 12.0,
+            coordinates: coordinate_systems::cartesian::Cartesian(Point3::new(
+                0.0_f32,
+                0.0_f32,
+                2.845_112_f32,
+            )),
+        };
+        let b1 = Atom {
+            z_value: 8,
+            atomic_mass: 15.99,
+            coordinates: coordinate_systems::cartesian::Cartesian(Point3::new(
+                1.899_115_f32,
+                0.0_f32,
+                4.139_062_f32,
+            )),
+        };
+        let c1 = Atom {
+            z_value: 1,
+            atomic_mass: 1.09,
+            coordinates: coordinate_systems::cartesian::Cartesian(Point3::new(
+                -1.894_048_f32,
+                0.0_f32,
+                3.747_688_7_f32,
+            )),
+        };
+        assert_eq!(180.0_f32, get_tors(&c1, &b1, &b2, &c2).to_degrees());
+        assert_eq!(180.0_f32, get_tors(&c2, &b2, &b1, &c1).to_degrees())
     }
 }
