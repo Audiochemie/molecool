@@ -1,18 +1,42 @@
 use super::atom::Atom;
-use coordinate_systems::DistanceTo;
 use nalgebra::Vector3;
+use num::{zero, Float};
+
+use coordinate_systems::DistanceTo;
 use qc_file_parsers::xyz::Xyz;
 /// Represents a molecule in the _atoms in molecules_ sense.
-pub struct Molecule {
+pub struct Molecule<T>
+where
+    T: Float
+        + std::fmt::Debug
+        + std::str::FromStr
+        + std::ops::SubAssign
+        + nalgebra::ComplexField<RealField = T>
+        + nalgebra::ClosedMul
+        + nalgebra::ClosedAdd
+        + 'static,
+    <T as std::str::FromStr>::Err: std::fmt::Debug,
+{
     /// Molecules have a total molar mass.
     pub molar_mass: f32,
     /// Molecules are commonly interpreted as a collection of building atoms.
-    pub building_atoms: Vec<Atom>,
+    pub building_atoms: Vec<Atom<T>>,
 }
 
-impl From<Xyz> for Molecule {
+impl<T> From<Xyz<T>> for Molecule<T>
+where
+    T: Float
+        + std::fmt::Debug
+        + std::str::FromStr
+        + std::ops::SubAssign
+        + nalgebra::ComplexField<RealField = T>
+        + nalgebra::ClosedMul
+        + nalgebra::ClosedAdd
+        + 'static,
+    <T as std::str::FromStr>::Err: std::fmt::Debug,
+{
     /// Cast Xyz struct into a Molecule.
-    fn from(value: Xyz) -> Self {
+    fn from(value: Xyz<T>) -> Self {
         let mut atoms = Vec::with_capacity(value.number_of_atoms);
         value
             .lines
@@ -32,7 +56,18 @@ impl From<Xyz> for Molecule {
 ///
 /// * `a` - First atom
 /// * `b` - Second atom
-pub fn get_distance_vec_between(a: &Atom, b: &Atom) -> Vector3<f32> {
+pub fn get_distance_vec_between<T>(a: &Atom<T>, b: &Atom<T>) -> Vector3<T>
+where
+    T: Float
+        + std::fmt::Debug
+        + std::str::FromStr
+        + std::ops::SubAssign
+        + nalgebra::ComplexField<RealField = T>
+        + nalgebra::ClosedMul
+        + nalgebra::ClosedAdd
+        + 'static,
+    <T as std::str::FromStr>::Err: std::fmt::Debug,
+{
     a.coordinates.distance_to(&b.coordinates)
 }
 
@@ -44,10 +79,21 @@ pub fn get_distance_vec_between(a: &Atom, b: &Atom) -> Vector3<f32> {
 /// * `c` - center atom.
 /// * `r` - atom to the right of center atom.
 ///
-pub fn get_angle_between(l: &Atom, c: &Atom, r: &Atom) -> f32 {
+pub fn get_angle_between<T>(l: &Atom<T>, c: &Atom<T>, r: &Atom<T>) -> T
+where
+    T: Float
+        + std::fmt::Debug
+        + std::str::FromStr
+        + std::ops::SubAssign
+        + nalgebra::ComplexField<RealField = T>
+        + nalgebra::ClosedMul
+        + nalgebra::ClosedAdd
+        + 'static,
+    <T as std::str::FromStr>::Err: std::fmt::Debug,
+{
     let e_lc = c.coordinates.distance_to(&l.coordinates).normalize();
     let e_rc = c.coordinates.distance_to(&r.coordinates).normalize();
-    e_lc.dot(&e_rc).acos()
+    num::Float::acos(e_lc.dot(&e_rc))
 }
 
 /// Function to retrive out-of-plane angle between four building atoms.
@@ -59,17 +105,28 @@ pub fn get_angle_between(l: &Atom, c: &Atom, r: &Atom) -> f32 {
 /// * `r` - atom to the right of center atom.
 /// * `h` - _hovering_ atom.
 ///
-pub fn get_oop(l: &Atom, c: &Atom, r: &Atom, h: &Atom) -> f32 {
+pub fn get_oop<T>(l: &Atom<T>, c: &Atom<T>, r: &Atom<T>, h: &Atom<T>) -> T
+where
+    T: Float
+        + std::fmt::Debug
+        + std::str::FromStr
+        + std::ops::SubAssign
+        + nalgebra::ComplexField<RealField = T>
+        + nalgebra::ClosedMul
+        + nalgebra::ClosedAdd
+        + 'static,
+    <T as std::str::FromStr>::Err: std::fmt::Debug,
+{
     let e_lc = c.coordinates.distance_to(&l.coordinates).normalize();
     let e_rc = c.coordinates.distance_to(&r.coordinates).normalize();
     let e_hc = c.coordinates.distance_to(&h.coordinates).normalize();
-    let denom = get_angle_between(l, c, r).sin();
+    let denom = num::Float::sin(get_angle_between(l, c, r));
     let n_vec_lcr = e_lc.cross(&e_rc);
-    if n_vec_lcr.norm() == 0.0_f32 {
+    if n_vec_lcr.norm() == zero() {
         // TODO Change Return to Result and handle properly.
         panic!("Normal vector is zero vector => e_lc || e_rc: unit vector are parallel.");
     }
-    (n_vec_lcr * 1.0_f32 / denom).dot(&e_hc).asin()
+    num::Float::asin((n_vec_lcr).dot(&e_hc).div(denom))
 }
 
 /// Function to retrive torsional angle between four building atoms.
@@ -81,15 +138,26 @@ pub fn get_oop(l: &Atom, c: &Atom, r: &Atom, h: &Atom) -> f32 {
 /// * `b2` - bonding atom2
 /// * `c2` - atom connected to b2
 ///
-pub fn get_tors(c1: &Atom, b1: &Atom, b2: &Atom, c2: &Atom) -> f32 {
+pub fn get_tors<T>(c1: &Atom<T>, b1: &Atom<T>, b2: &Atom<T>, c2: &Atom<T>) -> T
+where
+    T: Float
+        + std::fmt::Debug
+        + std::str::FromStr
+        + std::ops::SubAssign
+        + nalgebra::ComplexField<RealField = T>
+        + nalgebra::ClosedMul
+        + nalgebra::ClosedAdd
+        + 'static,
+    <T as std::str::FromStr>::Err: std::fmt::Debug,
+{
     let u1 = get_distance_vec_between(c1, b1);
     let u2 = get_distance_vec_between(b1, b2);
     let u3 = get_distance_vec_between(b2, c2);
     let cross_1 = u1.cross(&u2);
     let cross_2 = u2.cross(&u3);
-    let denom = 1.0_f32 / (cross_1.norm() * cross_2.norm());
-    let dot_denom = (cross_1).dot(&cross_2) * denom;
-    dot_denom.acos()
+    let denom = cross_1.norm() * cross_2.norm();
+    let dot_denom = (cross_1).dot(&cross_2).div(denom);
+    num::Float::acos(dot_denom)
 }
 
 /// Function to retrive all distance vectors for all atom pairs in the molecule.
@@ -97,9 +165,20 @@ pub fn get_tors(c1: &Atom, b1: &Atom, b2: &Atom, c2: &Atom) -> f32 {
 /// # Arguments
 ///
 /// * `mol` - molecule containing atoms.
-pub fn get_distances(mol: &Molecule) -> Vec<Vector3<f32>> {
+pub fn get_distances<T>(mol: &Molecule<T>) -> Vec<Vector3<T>>
+where
+    T: Float
+        + std::fmt::Debug
+        + std::str::FromStr
+        + std::ops::SubAssign
+        + nalgebra::ComplexField<RealField = T>
+        + nalgebra::ClosedMul
+        + nalgebra::ClosedAdd
+        + 'static,
+    <T as std::str::FromStr>::Err: std::fmt::Debug,
+{
     let num_atms = mol.building_atoms.len();
-    let mut distance_vector: Vec<Vector3<f32>> =
+    let mut distance_vector: Vec<Vector3<T>> =
         Vec::with_capacity((num_atms * num_atms - num_atms) / 2);
     for i_atm in 0..mol.building_atoms.len() - 1 {
         let ref_atm_coor = &mol.building_atoms[i_atm].coordinates;
@@ -113,8 +192,6 @@ pub fn get_distances(mol: &Molecule) -> Vec<Vector3<f32>> {
 
 #[cfg(test)]
 mod unit_tests {
-    use std::f32::consts::FRAC_1_PI;
-
     use super::{get_angle_between, get_distance_vec_between, get_oop};
     use crate::{atom::Atom, molekel::get_tors};
     use approx::assert_relative_eq;

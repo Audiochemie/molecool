@@ -1,7 +1,6 @@
 mod file_setup;
 #[cfg(test)]
 mod tests {
-    use std::f32::consts::FRAC_1_PI;
     use std::iter::zip;
 
     use crate::file_setup;
@@ -29,7 +28,7 @@ mod tests {
     #[test]
     fn test_molecule_from_numeric() {
         let mut test_file = file_setup::setup_acetaldehyde_numeric().unwrap();
-        let test_parsed = Xyz::new(&mut test_file, "Ang").unwrap();
+        let test_parsed: Xyz<f32> = Xyz::new(&mut test_file, "Ang").unwrap();
         let mol = Molecule::from(test_parsed);
         let expected_mol = PSE_MASSES[8] + 2.0_f32 * PSE_MASSES[6] + 4.0_f32 * PSE_MASSES[1];
         assert_relative_eq!(mol.molar_mass, expected_mol)
@@ -37,7 +36,7 @@ mod tests {
     #[test]
     fn test_get_distances() {
         let mut test_file = file_setup::setup_acetaldehyde_numeric().unwrap();
-        let test_parsed = Xyz::new(&mut test_file, "Ang").unwrap();
+        let test_parsed: Xyz<f32> = Xyz::new(&mut test_file, "Ang").unwrap();
         let mol = Molecule::from(test_parsed);
         let distance_vec = get_distances(&mol);
         let expected = Vec::from([
@@ -73,21 +72,17 @@ mod tests {
     #[test]
     fn test_get_oop() {
         let mut test_file = file_setup::setup_acetaldehyde_numeric().unwrap();
-        let test_parsed = Xyz::new(&mut test_file, "Ang").unwrap();
+        let test_parsed: Xyz<f32> = Xyz::new(&mut test_file, "Ang").unwrap();
         let mol = Molecule::from(test_parsed);
         let quadruples: [(usize, usize, usize, usize); 4] =
             [(0, 5, 4, 6), (0, 4, 5, 6), (6, 0, 5, 4), (4, 1, 0, 5)];
-        let expected: [f32; 4] = [19.939_726_f32, -19.850_523_f32, -31.064_344_f32, -53.651_534_f32];
+        let expected: [f32; 4] = [19.939_726, -19.850_523, -31.064_344, -53.651_534];
         for (angle, quadruple) in zip(expected, quadruples) {
             let h = &mol.building_atoms[quadruple.0];
             let l = &mol.building_atoms[quadruple.1];
             let c = &mol.building_atoms[quadruple.2];
             let r = &mol.building_atoms[quadruple.3];
-            assert_relative_eq!(
-                angle,
-                get_oop(l, c, r, h) * 180.0_f32 * FRAC_1_PI,
-                epsilon = 0.00001
-            );
+            assert_relative_eq!(angle, get_oop(l, c, r, h).to_degrees(),);
         }
     }
 }

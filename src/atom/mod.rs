@@ -1,20 +1,29 @@
+use num::Float;
 use super::pse_data::PSE_MASSES;
 use coordinate_systems::cartesian::Cartesian;
 use qc_file_parsers::xyz::{xyzline::symbol::PSE_SYMBOLS, XyzLine};
 
 /// Represents an Atom as found in the periodic system
-pub struct Atom {
+pub struct Atom<T>
+where
+    T: Float + std::fmt::Debug + std::str::FromStr + 'static,
+    <T as std::str::FromStr>::Err: std::fmt::Debug
+{
     /// The core charge
     pub z_value: usize,
     /// The atomic mass.
     pub atomic_mass: f32,
     /// The coordinates in space.
-    pub coordinates: Cartesian,
+    pub coordinates: Cartesian<T>,
 }
 
-impl From<XyzLine> for Atom {
+impl<T> From<XyzLine<T>> for Atom<T> 
+where
+    T: Float + std::fmt::Debug + std::str::FromStr + 'static,
+    <T as std::str::FromStr>::Err: std::fmt::Debug
+{
     /// Conversion function of a line in an Xyz file (see there) to an Atom struct.
-    fn from(value: XyzLine) -> Self {
+    fn from(value: XyzLine<T>) -> Self {
         match value {
             XyzLine::Numeric(n) => Self {
                 coordinates: Cartesian(n.xyz),
