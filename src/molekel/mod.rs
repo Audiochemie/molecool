@@ -35,6 +35,7 @@ where
         + 'static,
     <T as std::str::FromStr>::Err: std::fmt::Debug,
     f32: num::traits::AsPrimitive<T>,
+    f64: num::traits::AsPrimitive<T>,
 {
     /// Cast Xyz struct into a Molecule.
     fn from(value: Xyz<T>) -> Self {

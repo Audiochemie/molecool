@@ -30,7 +30,7 @@ mod tests {
         let mut test_file = file_setup::setup_acetaldehyde_numeric().unwrap();
         let test_parsed: Xyz<f32> = Xyz::new(&mut test_file, "Ang").unwrap();
         let mol = Molecule::from(test_parsed);
-        let expected_mol = PSE_MASSES[8] + 2.0_f32 * PSE_MASSES[6] + 4.0_f32 * PSE_MASSES[1];
+        let expected_mol = (PSE_MASSES[8] + 2.0 * PSE_MASSES[6] + 4.0 * PSE_MASSES[1]) as f32;
         assert_relative_eq!(mol.molar_mass, expected_mol)
     }
     #[test]

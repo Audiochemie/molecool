@@ -12,7 +12,7 @@ where
     /// The core charge
     pub z_value: usize,
     /// The atomic mass.
-    pub atomic_mass: f32,
+    pub atomic_mass: f64,
     /// The coordinates in space.
     pub coordinates: Cartesian<T>,
 }
