@@ -12,3 +12,4 @@ lazy_static = "1.4.0"
 nalgebra = "0.32.2"
 num = "0.4.1"
 qc_file_parsers = { version = "3.0.0", path = "../qc_file_parsers" }
+unit_conversion = { version = "0.3.0", path = "../unit_conversion" }
