@@ -1,6 +1,6 @@
 use super::atom::Atom;
 use nalgebra::Vector3;
-use num::{zero, Float};
+use num::{traits::AsPrimitive, zero, Float};
 
 use coordinate_systems::DistanceTo;
 use qc_file_parsers::xyz::Xyz;
@@ -10,15 +10,15 @@ where
     T: Float
         + std::fmt::Debug
         + std::str::FromStr
-        + std::ops::SubAssign
-        + nalgebra::ComplexField<RealField = T>
         + nalgebra::ClosedMul
         + nalgebra::ClosedAdd
+        + nalgebra::ClosedDiv
+        + num::cast::AsPrimitive<T>
         + 'static,
     <T as std::str::FromStr>::Err: std::fmt::Debug,
 {
     /// Molecules have a total molar mass.
-    pub molar_mass: f32,
+    pub molar_mass: T,
     /// Molecules are commonly interpreted as a collection of building atoms.
     pub building_atoms: Vec<Atom<T>>,
 }
@@ -28,12 +28,13 @@ where
     T: Float
         + std::fmt::Debug
         + std::str::FromStr
-        + std::ops::SubAssign
-        + nalgebra::ComplexField<RealField = T>
+        + num::cast::AsPrimitive<T>
         + nalgebra::ClosedMul
         + nalgebra::ClosedAdd
+        + nalgebra::ClosedDiv
         + 'static,
     <T as std::str::FromStr>::Err: std::fmt::Debug,
+    f32: num::traits::AsPrimitive<T>,
 {
     /// Cast Xyz struct into a Molecule.
     fn from(value: Xyz<T>) -> Self {
@@ -42,7 +43,9 @@ where
             .lines
             .iter()
             .for_each(|xyz_line| atoms.push(Atom::from(xyz_line.clone())));
-        let molar_mass = atoms.iter().fold(0.0_f32, |at, at2| at + at2.atomic_mass);
+        let molar_mass: T = atoms
+            .iter()
+            .fold(0.0.as_(), |at, at2| at + at2.atomic_mass.as_());
         Self {
             molar_mass,
             building_atoms: atoms,
@@ -174,6 +177,7 @@ where
         + nalgebra::ComplexField<RealField = T>
         + nalgebra::ClosedMul
         + nalgebra::ClosedAdd
+        + num::cast::AsPrimitive<T>
         + 'static,
     <T as std::str::FromStr>::Err: std::fmt::Debug,
 {
