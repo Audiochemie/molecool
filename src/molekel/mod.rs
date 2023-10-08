@@ -2,7 +2,7 @@ use super::atom::Atom;
 use nalgebra::{Point3, Vector3};
 use num::{traits::AsPrimitive, zero, Float};
 
-use coordinate_systems::DistanceTo;
+use coordinate_systems::{DistanceTo, MoveTo};
 use qc_file_parsers::xyz::Xyz;
 /// Represents a molecule in the _atoms in molecules_ sense.
 pub struct Molecule<T>
@@ -52,6 +52,31 @@ where
             building_atoms: atoms,
         }
     }
+}
+
+/// Function to shift all building atoms coordinates' w.r.t. to a given point.
+/// # Arguments
+///     
+/// * `mol` - Molecule with `building_atoms` to shift.
+/// * `to` - `Point3` to use for shifting.
+///
+pub fn uniform_shift<T>(mol: &mut Molecule<T>, to: &Point3<T>)
+where
+    T: Float
+        + std::fmt::Debug
+        + std::str::FromStr
+        + num::cast::AsPrimitive<T>
+        + nalgebra::ClosedMul
+        + nalgebra::ClosedAdd
+        + nalgebra::ClosedDiv
+        + 'static,
+    <T as std::str::FromStr>::Err: std::fmt::Debug,
+    f32: num::traits::AsPrimitive<T>,
+    f64: num::traits::AsPrimitive<T>,
+{
+    mol.building_atoms
+        .iter_mut()
+        .for_each(|atm| atm.coordinates.move_to(to.x, to.y, to.z))
 }
 
 /// Function to retrive the distance Vector between  two atoms a and b
@@ -257,6 +282,7 @@ mod unit_tests {
         let v = get_distance_vec_between(&a, &b);
         assert_eq!((0.0_f32, 0.0_f32, -2.845_112_f32), (v.x, v.y, v.z))
     }
+
     #[test]
     fn test_get_angle_between_atoms() {
         let l = Atom {
@@ -284,7 +310,6 @@ mod unit_tests {
                 4.139_062_f32,
             )),
         };
-
         let d12 = get_distance_vec_between(&l, &c).norm();
         let e12 = get_distance_vec_between(&l, &c).normalize();
         let d13 = get_distance_vec_between(&l, &r).norm();
@@ -333,6 +358,7 @@ mod unit_tests {
         };
         assert_relative_eq!(0.0_f32, get_oop(&l, &c, &r, &h))
     }
+
     #[test]
     fn test_torsional_angle() {
         let c2 = Atom {
@@ -372,4 +398,5 @@ mod unit_tests {
         assert_eq!(180.0_f32, get_tors(&c1, &b1, &b2, &c2).to_degrees());
         assert_eq!(180.0_f32, get_tors(&c2, &b2, &b1, &c1).to_degrees())
     }
+
 }
