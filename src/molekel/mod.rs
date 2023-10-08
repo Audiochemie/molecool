@@ -1,9 +1,11 @@
-use super::atom::Atom;
-use nalgebra::{Point3, Vector3};
+use crate::atom::Atom;
+use nalgebra::{Matrix3, Point3, Vector3};
 use num::{traits::AsPrimitive, zero, Float};
 
-use coordinate_systems::{DistanceTo, MoveTo};
+use coordinate_systems::{DistanceTo, GetTriplet};
 use qc_file_parsers::xyz::Xyz;
+
+#[derive(Clone, Debug)]
 /// Represents a molecule in the _atoms in molecules_ sense.
 pub struct Molecule<T>
 where
@@ -69,14 +71,17 @@ where
         + nalgebra::ClosedMul
         + nalgebra::ClosedAdd
         + nalgebra::ClosedDiv
+        + nalgebra::ClosedSub
         + 'static,
     <T as std::str::FromStr>::Err: std::fmt::Debug,
     f32: num::traits::AsPrimitive<T>,
     f64: num::traits::AsPrimitive<T>,
 {
-    mol.building_atoms
-        .iter_mut()
-        .for_each(|atm| atm.coordinates.move_to(to.x, to.y, to.z))
+    mol.building_atoms.iter_mut().for_each(|atm| {
+        atm.coordinates.0.x -= to.x;
+        atm.coordinates.0.y -= to.y;
+        atm.coordinates.0.z -= to.z;
+    });
 }
 
 /// Function to retrive the distance Vector between  two atoms a and b
@@ -159,7 +164,6 @@ where
 }
 
 /// Function to retrive torsional angle between four building atoms.
-///
 /// # Arguments
 ///
 /// * `c1` - atom connected to b1
@@ -224,7 +228,7 @@ where
 /// com is computed as the sum of all mass weighted coordinates.
 /// # Arguments
 ///
-///  *  mol - Reference to Molecule struct.
+///  *  `mol` - Reference to Molecule struct.
 ///
 pub fn get_centre_of_mass<T>(mol: &Molecule<T>) -> Point3<T>
 where
@@ -244,14 +248,60 @@ where
         .building_atoms
         .iter()
         .fold(Point3::<T>::origin(), |mut o, at| {
-            let mw = at.coordinates.0.map(|e| e * at.atomic_mass.as_());
-            o.x += mw.x;
-            o.y += mw.y;
-            o.z += mw.z;
+            o.x += at.atomic_mass.as_() * at.coordinates.0.x;
+            o.y += at.atomic_mass.as_() * at.coordinates.0.y;
+            o.z += at.atomic_mass.as_() * at.coordinates.0.z;
             o
         });
     p.apply(|e| *e /= mol.molar_mass);
     p
+}
+
+/// Function to construct the matrix representation of the moment of intertia tensor [I] of a
+/// molecule.
+///
+/// # Arguments
+///
+///  *  `mol` - Reference to Molecule struct.
+///  *  `basis` - `char` to specify which basis shall be used.
+///         `s` -> spherical
+///         `c` -> cartesian
+///     -> TODO
+
+pub fn get_i_tensor<T>(mol: &Molecule<T>) -> Matrix3<T>
+where
+    T: Float
+        + std::fmt::Debug
+        + std::str::FromStr
+        + num::cast::AsPrimitive<T>
+        + nalgebra::ClosedMul
+        + nalgebra::ClosedAdd
+        + nalgebra::ClosedDiv
+        + nalgebra::ClosedSub
+        + 'static,
+    <T as std::str::FromStr>::Err: std::fmt::Debug,
+    f32: num::traits::AsPrimitive<T>,
+    f64: num::traits::AsPrimitive<T>,
+{
+    let com = get_centre_of_mass(mol);
+    let mut mol_clone = mol.clone();
+    uniform_shift(&mut mol_clone, &com);
+    let mut i_tensor: Matrix3<T> = Matrix3::zeros();
+    for atm in mol_clone.building_atoms.iter() {
+        let mi = atm.atomic_mass.as_();
+        let coords = atm.coordinates.get_triplet();
+        let (x, y, z) = (*coords.0, *coords.1, *coords.2);
+        i_tensor[(0, 0)] += mi * (y * y + z * z);
+        i_tensor[(0, 1)] -= mi * x * y;
+        i_tensor[(0, 2)] -= mi * x * z;
+        i_tensor[(1, 1)] += mi * (x * x + z * z);
+        i_tensor[(1, 2)] -= mi * y * z;
+        i_tensor[(2, 2)] += mi * (x * x + y * y);
+    }
+    i_tensor.m31 = i_tensor.m13;
+    i_tensor.m32 = i_tensor.m23;
+    i_tensor.m21 = i_tensor.m12;
+    i_tensor
 }
 
 #[cfg(test)]
@@ -398,5 +448,4 @@ mod unit_tests {
         assert_eq!(180.0_f32, get_tors(&c1, &b1, &b2, &c2).to_degrees());
         assert_eq!(180.0_f32, get_tors(&c2, &b2, &b1, &c1).to_degrees())
     }
-
 }

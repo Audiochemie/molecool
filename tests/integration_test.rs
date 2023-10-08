@@ -9,16 +9,15 @@ mod tests {
     use molecool::pse_data::PSE_MASSES;
     use molecool::{
         atom::Atom,
-        molekel::{get_centre_of_mass, get_distances, get_oop, Molecule},
+        molekel::{get_centre_of_mass, get_distances, get_i_tensor, get_oop, Molecule},
     };
-    use nalgebra::Point3;
+    use nalgebra::{Matrix3, Point3};
     use qc_file_parsers::xyz::Xyz;
 
     #[test]
     fn test_atom_from_symbolic() {
         let mut test_file = file_setup::setup_allene_symbolic().unwrap();
-        let test_parsed = Xyz::new(&mut test_file, "Ang").unwrap();
-        test_parsed.lines.iter().for_each(|l| println!("{:?}", l));
+        let test_parsed = Xyz::new(&mut test_file, "bohr").unwrap();
         let test_atom = Atom::from(test_parsed.lines[0].clone());
         assert_eq!(test_atom.z_value, 6);
         assert_eq!(
@@ -38,7 +37,7 @@ mod tests {
     #[test]
     fn test_molecule_from_numeric() {
         let mut test_file = file_setup::setup_acetaldehyde_numeric().unwrap();
-        let test_parsed: Xyz<f32> = Xyz::new(&mut test_file, "Ang").unwrap();
+        let test_parsed: Xyz<f32> = Xyz::new(&mut test_file, "bohr").unwrap();
         let mol = Molecule::from(test_parsed);
         let expected_mol = (PSE_MASSES[8] + 2.0 * PSE_MASSES[6] + 4.0 * PSE_MASSES[1]) as f32;
         assert_relative_eq!(mol.molar_mass, expected_mol)
@@ -48,7 +47,7 @@ mod tests {
     fn test_molecule_from_symbolic() {
         // Test acetaldehyde
         let mut test_file = file_setup::setup_acetaldehyde_symbolic().unwrap();
-        let test_parsed: Xyz<f32> = Xyz::new(&mut test_file, "Ang").unwrap();
+        let test_parsed: Xyz<f32> = Xyz::new(&mut test_file, "bohr").unwrap();
         let mol = Molecule::from(test_parsed);
         let expected_mol = (PSE_MASSES[8] + 2.0 * PSE_MASSES[6] + 4.0 * PSE_MASSES[1]) as f32;
         assert_relative_eq!(mol.molar_mass, expected_mol);
@@ -98,7 +97,7 @@ mod tests {
         let iter_space = (natms * natms - natms) / 2;
         assert_eq!(iter_space, expected.len());
         for i in 0..iter_space {
-            assert_relative_eq!(distance_vec[i].norm(), expected[i], epsilon = 0.00001);
+            assert_relative_eq!(distance_vec[i].norm(), expected[i], epsilon = 1e-5);
         }
     }
 
@@ -122,17 +121,30 @@ mod tests {
     #[test]
     fn test_get_com() {
         let mut test_file = file_setup::setup_allene_symbolic().unwrap();
-        let test_parsed: Xyz<f64> = Xyz::new(&mut test_file, "Ang").unwrap();
+        let test_parsed: Xyz<f64> = Xyz::new(&mut test_file, "bohr").unwrap();
         let mol = Molecule::from(test_parsed);
         let com: Point3<f64> = get_centre_of_mass(&mol);
         let expected: Point3<f64> = Point3::new(0.0, 0.0, 1.889_725_99);
         assert_relative_eq!(com, expected, epsilon = 1e-8);
 
         let mut test_file = file_setup::setup_acetaldehyde_numeric().unwrap();
-        let test_parsed: Xyz<f32> = Xyz::new(&mut test_file, "Ang").unwrap();
+        let test_parsed: Xyz<f64> = Xyz::new(&mut test_file, "bohr").unwrap();
         let mol = Molecule::from(test_parsed);
-        let com: Point3<f32> = get_centre_of_mass(&mol);
-        let expected: Point3<f32> = Point3::new(0.644_949_26, 0.0, 2.316_637_92);
+        let com: Point3<f64> = get_centre_of_mass(&mol);
+        let expected: Point3<f64> = Point3::new(0.644_949_26, 0.0, 2.316_638);
         assert_relative_eq!(com, expected, epsilon = 1e-3);
+    }
+
+    #[test]
+    fn test_i_tensor() {
+        let mut test_file = file_setup::setup_allene_symbolic().unwrap();
+        let test_parsed: Xyz<f32> = Xyz::new(&mut test_file, "bohr").unwrap();
+        let mol = Molecule::from(test_parsed);
+        let i_tensor = get_i_tensor(&mol);
+        let expected = Matrix3::<f32>::new(
+            10.797_024, 0.0000000, 0.0000000, 0.0000000, 210.867_28, 0.0000000, 0.0000000,
+            0.0000000, 210.867_28,
+        );
+        assert_relative_eq!(i_tensor, expected, epsilon=1e0);
     }
 }
