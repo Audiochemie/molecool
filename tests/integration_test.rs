@@ -6,12 +6,13 @@ mod tests {
     use crate::file_setup;
     use approx::assert_relative_eq;
     use coordinate_systems::cartesian::Cartesian;
+    use molecool::molekel::principle_moments_of_inertia;
     use molecool::pse_data::PSE_MASSES;
     use molecool::{
         atom::Atom,
         molekel::{get_centre_of_mass, get_distances, get_i_tensor, get_oop, Molecule},
     };
-    use nalgebra::{Matrix3, Point3};
+    use nalgebra::{Matrix3, Point3, Vector3};
     use qc_file_parsers::xyz::Xyz;
 
     #[test]
@@ -145,6 +146,12 @@ mod tests {
             10.797_024, 0.0000000, 0.0000000, 0.0000000, 210.867_28, 0.0000000, 0.0000000,
             0.0000000, 210.867_28,
         );
-        assert_relative_eq!(i_tensor, expected, epsilon=1e0);
+        assert_relative_eq!(i_tensor, expected, epsilon = 1e0);
+        let comput = principle_moments_of_inertia(i_tensor);
+        assert_relative_eq!(
+            comput,
+            Vector3::<f32>::new(10.797_024, 210.867_28, 210.867_28),
+            epsilon = 1e0
+        );
     }
 }

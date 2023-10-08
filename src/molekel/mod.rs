@@ -1,5 +1,5 @@
 use crate::atom::Atom;
-use nalgebra::{Matrix3, Point3, Vector3};
+use nalgebra::{Matrix3, OVector, Point3, RealField, Vector3};
 use num::{traits::AsPrimitive, zero, Float};
 
 use coordinate_systems::{DistanceTo, GetTriplet};
@@ -291,17 +291,40 @@ where
         let mi = atm.atomic_mass.as_();
         let coords = atm.coordinates.get_triplet();
         let (x, y, z) = (*coords.0, *coords.1, *coords.2);
-        i_tensor[(0, 0)] += mi * (y * y + z * z);
-        i_tensor[(0, 1)] -= mi * x * y;
-        i_tensor[(0, 2)] -= mi * x * z;
-        i_tensor[(1, 1)] += mi * (x * x + z * z);
-        i_tensor[(1, 2)] -= mi * y * z;
-        i_tensor[(2, 2)] += mi * (x * x + y * y);
+        i_tensor.m11 += mi * (y * y + z * z);
+        i_tensor.m12 -= mi * x * y;
+        i_tensor.m13 -= mi * x * z;
+        i_tensor.m22 += mi * (x * x + z * z);
+        i_tensor.m23 -= mi * y * z;
+        i_tensor.m33 += mi * (x * x + y * y);
     }
     i_tensor.m31 = i_tensor.m13;
     i_tensor.m32 = i_tensor.m23;
     i_tensor.m21 = i_tensor.m12;
     i_tensor
+}
+
+/// Function to compute the principle moments of inertia.
+/// # Arguments
+///
+/// `i_tensor` - moment of inertia tensor
+pub fn principle_moments_of_inertia<T>(i_tensor: Matrix3<T>) -> Vector3<T>
+where
+    T: Float
+        + std::fmt::Debug
+        + std::str::FromStr
+        + num::cast::AsPrimitive<T>
+        + nalgebra::ClosedMul
+        + nalgebra::ClosedAdd
+        + nalgebra::ClosedDiv
+        + nalgebra::ClosedSub
+        + nalgebra::ComplexField<RealField = T>
+        + 'static,
+    <T as std::str::FromStr>::Err: std::fmt::Debug,
+    f32: num::traits::AsPrimitive<T>,
+    f64: num::traits::AsPrimitive<T>,
+{
+    i_tensor.symmetric_eigenvalues()
 }
 
 #[cfg(test)]
