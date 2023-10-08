@@ -1,5 +1,5 @@
 use super::atom::Atom;
-use nalgebra::Vector3;
+use nalgebra::{Point3, Vector3};
 use num::{traits::AsPrimitive, zero, Float};
 
 use coordinate_systems::DistanceTo;
@@ -193,6 +193,35 @@ where
         }
     }
     distance_vector
+}
+
+/// Computes the centre of mass (com) of the Molecule.
+/// com is computed as the sum of all mass weighted coordinates.
+/// # Arguments
+///
+///  *  mol - Reference to Molecule struct.
+///
+pub fn get_centre_of_mass<T>(mol: &Molecule<T>) -> Point3<T>
+where
+    T: Float
+        + std::fmt::Debug
+        + std::str::FromStr
+        + num::cast::AsPrimitive<T>
+        + nalgebra::ClosedMul
+        + nalgebra::ClosedAdd
+        + nalgebra::ClosedDiv
+        + 'static,
+    <T as std::str::FromStr>::Err: std::fmt::Debug,
+    f32: num::traits::AsPrimitive<T>,
+    f64: num::traits::AsPrimitive<T>,
+{
+    mol.building_atoms.iter().fold(Point3::<T>::origin(), |mut o, at| {
+        let mw = at.coordinates.0.map(|e| e*at.atomic_mass.as_()/mol.molar_mass);
+        o.x +=  mw.x;
+        o.y +=  mw.y;
+        o.z +=  mw.z;
+        o
+    })
 }
 
 #[cfg(test)]
