@@ -215,13 +215,18 @@ where
     f32: num::traits::AsPrimitive<T>,
     f64: num::traits::AsPrimitive<T>,
 {
-    mol.building_atoms.iter().fold(Point3::<T>::origin(), |mut o, at| {
-        let mw = at.coordinates.0.map(|e| e*at.atomic_mass.as_()/mol.molar_mass);
-        o.x +=  mw.x;
-        o.y +=  mw.y;
-        o.z +=  mw.z;
-        o
-    })
+    let mut p = mol
+        .building_atoms
+        .iter()
+        .fold(Point3::<T>::origin(), |mut o, at| {
+            let mw = at.coordinates.0.map(|e| e * at.atomic_mass.as_());
+            o.x += mw.x;
+            o.y += mw.y;
+            o.z += mw.z;
+            o
+        });
+    p.apply(|e| *e /= mol.molar_mass);
+    p
 }
 
 #[cfg(test)]
