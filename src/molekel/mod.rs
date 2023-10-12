@@ -1,9 +1,11 @@
 use crate::atom::Atom;
-use nalgebra::{Matrix3, OVector, Point3, RealField, Vector3};
+use nalgebra::{Matrix3, Point3, Vector3};
 use num::{traits::AsPrimitive, zero, Float};
 
 use coordinate_systems::{DistanceTo, GetTriplet};
 use qc_file_parsers::xyz::Xyz;
+
+pub mod properties;
 
 #[derive(Clone, Debug)]
 /// Represents a molecule in the _atoms in molecules_ sense.
@@ -307,7 +309,7 @@ where
 /// Function to compute the principle moments of inertia.
 /// # Arguments
 ///
-/// `i_tensor` - moment of inertia tensor
+///  * `i_tensor` - moment of inertia tensor
 pub fn principle_moments_of_inertia<T>(i_tensor: Matrix3<T>) -> Vector3<T>
 where
     T: Float
