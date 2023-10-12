@@ -5,6 +5,7 @@ use num::{traits::AsPrimitive, zero, Float};
 use coordinate_systems::{DistanceTo, GetTriplet};
 use qc_file_parsers::xyz::Xyz;
 
+pub mod electronic_energy;
 pub mod properties;
 
 #[derive(Clone, Debug)]

@@ -6,6 +6,7 @@ mod tests {
     use crate::file_setup;
     use approx::assert_relative_eq;
     use coordinate_systems::cartesian::Cartesian;
+    use molecool::molekel::electronic_energy::wf::hf;
     use molecool::molekel::principle_moments_of_inertia;
     use molecool::molekel::properties::{mass_weight_hessian, Hessian};
     use molecool::pse_data::PSE_MASSES;
@@ -13,10 +14,9 @@ mod tests {
         atom::Atom,
         molekel::{get_centre_of_mass, get_distances, get_i_tensor, get_oop, Molecule},
     };
-    use nalgebra::{DMatrix, DVector, Matrix3, OVector, Point3, Vector3};
+    use nalgebra::{DMatrix, DVector, Matrix3, Point3, Vector3};
     use qc_file_parsers::array_text::parse_text_into_matrix;
     use qc_file_parsers::xyz::Xyz;
-    use unit_conversion::energy::CONVERT_2_RCM_FROM;
 
     #[test]
     fn test_atom_from_symbolic() {
@@ -274,7 +274,14 @@ mod tests {
             .as_mut_slice()
             .sort_by(|a, b| b.partial_cmp(a).unwrap());
         for (c, ex) in computed_eigvals.iter().zip(expected_eigvals.iter()) {
-            assert_relative_eq!(c, ex, epsilon=1e-3);
+            assert_relative_eq!(c, ex, epsilon = 1e-3);
         }
+    }
+
+    #[test]
+    fn test_get_v_nuc_nuc_from_file() {
+        let mut test_file = file_setup::setup_v_nuc_nuc_water().unwrap();
+        let test_v_nuc_nuc = hf::get_v_nuc_nuc_from_file(&mut test_file);
+        assert_eq!(test_v_nuc_nuc, 8.002_367_061_810_450)
     }
 }
