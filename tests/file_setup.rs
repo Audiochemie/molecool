@@ -40,6 +40,11 @@ pub fn setup_chlorbenzene_hessian() -> Result<BufReader<File>> {
 }
 
 pub fn setup_v_nuc_nuc_water() -> Result<BufReader<File>> {
-    let test_file = File::open("tests/h2o_vnn.dat")?;
+    let test_file = File::open("tests/water_integrals/h2o_vnn.dat")?;
+    Ok(BufReader::new(test_file))
+}
+
+pub fn setup_s_mn_water() -> Result<BufReader<File>> {
+    let test_file = File::open("tests/water_integrals/h2o_smn.dat")?;
     Ok(BufReader::new(test_file))
 }
