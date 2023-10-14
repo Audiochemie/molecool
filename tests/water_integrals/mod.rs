@@ -1,19 +1,35 @@
 use crate::file_setup;
 use approx::assert_relative_eq;
-use molecool::molekel::electronic_energy::wf::hf;
+use molecool::molekel::electronic_energy::{integrals::from_file, wf::hf};
 use nalgebra::DMatrix;
 
 #[test]
 fn test_get_v_nuc_nuc_from_file() {
     let mut test_file = file_setup::setup_v_nuc_nuc_water().unwrap();
-    let test_v_nuc_nuc = hf::get_v_nuc_nuc_from_file(&mut test_file);
+    let test_v_nuc_nuc = from_file::get_v_nuc_nuc_from_fortran_format_file(&mut test_file);
     assert_eq!(test_v_nuc_nuc, 8.002_367_061_810_450)
+}
+
+#[test]
+#[should_panic(expected = "Given index is not an integer")]
+fn test_get_smn_from_faulty_file() {
+    let mut test_file = file_setup::setup_s_mn_water_faulty().unwrap();
+    from_file::get_s_mn_from_fortran_format_file(&mut test_file, 14);
+}
+
+#[test]
+#[should_panic(
+    expected = "There is no ParsedValue here, i.e. second entry is not an integer! No Index => No matrix. :-("
+)]
+fn test_get_smn_from_faulty_file2() {
+    let mut test_file = file_setup::setup_s_mn_water_faulty2().unwrap();
+    from_file::get_s_mn_from_fortran_format_file(&mut test_file, 14);
 }
 
 #[test]
 fn test_get_smn_from_file() {
     let mut test_file = file_setup::setup_s_mn_water().unwrap();
-    let test_s_mn = hf::get_s_mn_from_file(&mut test_file, 14);
+    let test_s_mn = from_file::get_s_mn_from_fortran_format_file(&mut test_file, 14);
     let expected_s_mn = [
         (1, 1, 1.000000000000000),
         (2, 1, 0.838055657090899),
@@ -123,7 +139,7 @@ fn test_get_smn_from_file() {
     ];
     let mut expctd_smn: DMatrix<f64> = DMatrix::zeros(14, 14);
     for (c, r, v) in expected_s_mn {
-        expctd_smn[(c-1, r-1)] = v;
+        expctd_smn[(c - 1, r - 1)] = v;
     }
     for (i, (ex, comp)) in expctd_smn
         .lower_triangle()
@@ -131,7 +147,6 @@ fn test_get_smn_from_file() {
         .zip(test_s_mn.iter())
         .enumerate()
     {
-        println!("{}", i);
         assert_relative_eq!(ex, comp)
     }
 }
