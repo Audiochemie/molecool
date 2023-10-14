@@ -44,8 +44,18 @@ pub fn setup_v_nuc_nuc_water() -> Result<BufReader<File>> {
     Ok(BufReader::new(test_file))
 }
 
+pub fn setup_v_nuc_el_water() -> Result<BufReader<File>> {
+    let test_file = File::open("tests/water_integrals/h2o_ve.dat")?;
+    Ok(BufReader::new(test_file))
+}
+
 pub fn setup_s_mn_water() -> Result<BufReader<File>> {
     let test_file = File::open("tests/water_integrals/h2o_smn.dat")?;
+    Ok(BufReader::new(test_file))
+}
+
+pub fn setup_t_mn_water() -> Result<BufReader<File>> {
+    let test_file = File::open("tests/water_integrals/h2o_t.dat")?;
     Ok(BufReader::new(test_file))
 }
 

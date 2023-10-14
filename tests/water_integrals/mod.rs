@@ -141,7 +141,7 @@ fn test_get_smn_from_file() {
     for (c, r, v) in expected_s_mn {
         expctd_smn[(c - 1, r - 1)] = v;
     }
-    for (i, (ex, comp)) in expctd_smn
+    for (_i, (ex, comp)) in expctd_smn
         .lower_triangle()
         .iter()
         .zip(test_s_mn.iter())
@@ -149,4 +149,22 @@ fn test_get_smn_from_file() {
     {
         assert_relative_eq!(ex, comp)
     }
+}
+
+#[test]
+fn test_get_tmn_from_file() {
+    let mut test_file = file_setup::setup_t_mn_water().unwrap();
+    let test_t_mn = from_file::get_t_mn_from_fortran_format_file(&mut test_file, 14);
+    assert_relative_eq!(52.614894976915927_f64, test_t_mn[(0, 0)]);
+    assert_relative_eq!(0.266400000000000_f64, test_t_mn[(13, 13)]);
+    assert_relative_eq!(0.085062970728081_f64, test_t_mn[(10, 5)]);
+}
+
+#[test]
+fn test_get_vmn_from_file() {
+    let mut test_file = file_setup::setup_v_nuc_el_water().unwrap();
+    let test_t_mn = from_file::get_v_mn_from_fortran_format_file(&mut test_file, 14);
+    assert_relative_eq!(-82.499042646076362, test_t_mn[(0, 0)]);
+    assert_relative_eq!(-4.517555775212115, test_t_mn[(13, 13)]);
+    assert_relative_eq!(-1.238061146392203, test_t_mn[(10, 5)]);
 }
