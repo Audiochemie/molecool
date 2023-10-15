@@ -68,3 +68,8 @@ pub fn setup_s_mn_water_faulty2() -> Result<BufReader<File>> {
     let test_file = File::open("tests/water_integrals/h2o_smn_faulty2.dat")?;
     Ok(BufReader::new(test_file))
 }
+
+pub fn setup_eri_water() -> Result<BufReader<File>> {
+    let test_file = File::open("tests/water_integrals/h2o_eri.dat")?;
+    Ok(BufReader::new(test_file))
+}

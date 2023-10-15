@@ -1,26 +1,23 @@
 use crate::file_setup;
 use approx::assert_relative_eq;
-use molecool::molekel::electronic_energy::{integrals::from_file, wf::hf};
+use molecool::molekel::electronic_energy::integrals::from_file;
 use nalgebra::DMatrix;
 
-#[test]
-fn test_get_v_nuc_nuc_from_file() {
+#[test] fn test_get_v_nuc_nuc_from_file() {
     let mut test_file = file_setup::setup_v_nuc_nuc_water().unwrap();
     let test_v_nuc_nuc = from_file::get_v_nuc_nuc_from_fortran_format_file(&mut test_file);
     assert_eq!(test_v_nuc_nuc, 8.002_367_061_810_450)
 }
 
 #[test]
-#[should_panic(expected = "Given index is not an integer")]
+#[should_panic(expected = "Given index is not an integer!")]
 fn test_get_smn_from_faulty_file() {
     let mut test_file = file_setup::setup_s_mn_water_faulty().unwrap();
     from_file::get_s_mn_from_fortran_format_file(&mut test_file, 14);
 }
 
 #[test]
-#[should_panic(
-    expected = "There is no ParsedValue here, i.e. second entry is not an integer! No Index => No matrix. :-("
-)]
+#[should_panic(expected = "Given index is not an integer!")]
 fn test_get_smn_from_faulty_file2() {
     let mut test_file = file_setup::setup_s_mn_water_faulty2().unwrap();
     from_file::get_s_mn_from_fortran_format_file(&mut test_file, 14);
@@ -167,4 +164,16 @@ fn test_get_vmn_from_file() {
     assert_relative_eq!(-82.499042646076362, test_t_mn[(0, 0)]);
     assert_relative_eq!(-4.517555775212115, test_t_mn[(13, 13)]);
     assert_relative_eq!(-1.238061146392203, test_t_mn[(10, 5)]);
+}
+
+#[test]
+fn test_get_eri_from_file() {
+    let mut test_file = file_setup::setup_eri_water().unwrap();
+    let test_eri = from_file::get_v_ee_from_fortran_format_file(&mut test_file, 14);
+    assert_eq!(test_eri.len(), 5565);
+    assert_eq!(test_eri[0], 6.354189973248753);
+    assert_eq!(test_eri[18],0.472289079534761);
+    assert_eq!(test_eri[5515], 0.007712593683891);
+    assert_eq!(test_eri[1887], 0.025526245601437);
+    assert_eq!(test_eri[5564], 0.475528488258028);
 }
